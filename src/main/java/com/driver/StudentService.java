@@ -15,24 +15,20 @@ public class StudentService {
     }
 
     public void addStudentTeacherPair(String student, String teacher) {
-        Optional<Student> studentAdd=studentRepository.getStudentByName(student);
-        Optional<Teacher> teacherAdd=studentRepository.getTeacherByName(teacher);
-        if(studentAdd.isPresent() && teacherAdd.isPresent()){
-            Teacher t = teacherAdd.get();
-            Integer initialStudents=t.getNumberOfStudents();
-            initialStudents++;
-            t.setNumberOfStudents(initialStudents);
-            studentRepository.adding(t);
-            studentRepository.addStudentTeacherPair(student, teacher);
+        Optional<Student> studentOpt = studentRepository.getStudent(student);
+        Optional<Teacher> teacherOpt = studentRepository.getTeacher(teacher);
+        if(studentOpt.isEmpty()) {
+            throw new RuntimeException(student);
         }
-    }
+        if(teacherOpt.isEmpty()) {
+            throw new RuntimeException();
+        }
 
-    public Teacher getStudentByName(String name) {
-        Optional<Teacher> teacherOpt=studentRepository.getTeacherByName(name);
-        if(teacherOpt.isPresent()){
-            return teacherOpt.get();
-        }
-        throw new RuntimeException("Order Not Found");
+        Teacher teacherObj = teacherOpt.get();
+        teacherObj.setNumberOfStudents(teacherObj.getNumberOfStudents()+1);
+        studentRepository.adding(teacherObj);
+
+        studentRepository.add(student, teacher);
     }
 
     public List<String> getAllStudents() {
@@ -43,11 +39,30 @@ public class StudentService {
         List<String> students = studentRepository.getAllStudentForTeacher(teacher);
         studentRepository.deleteTeacher(teacher);
         for(String student:students) {
-            studentRepository.removeTeacher(student);
+            studentRepository.deleteStudent(student);
         }
     }
 
-    public void deleteAllteachers() {
-        studentRepository.deleteAllTeachers();
+    public Student getStudent(String name) {
+        Optional<Student> studentOpt = studentRepository.getStudent(name);
+        if(studentOpt.isPresent()){
+            return studentOpt.get();
+        }
+        throw new RuntimeException(name);
+    }
+
+    public Teacher getTeacherByName(String name) {
+        return studentRepository.getTeacherByName(name);
+    }
+
+    public List<String> getStudentsByTeacherName(String teacher) {
+        return studentRepository.getStudentsByTeacher(teacher);
+    }
+
+    public void deleteAllTeachers() {
+        List<String> teachers = studentRepository.getAllTeachers();
+        for(String teacher: teachers) {
+            deleteTeacher(teacher);
+        }
     }
 }
